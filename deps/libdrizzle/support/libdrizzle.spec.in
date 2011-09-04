@@ -1,0 +1,72 @@
+Summary: Drizzle Client & Protocol Library
+Name: @PACKAGE@
+Version: @VERSION@
+Release: 1
+License: BSD
+Group: System Environment/Libraries
+BuildRequires: gcc gcc-c++
+URL: https://launchpad.net/libdrizzle
+Source: http://launchpad.net/libdrizzle/%{version}/%{version}/+download/libdrizzle-%{version}.tar.gz
+BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+
+%description
+This is the the client and protocol library for the Drizzle project. The
+server, drizzled, will use this as for the protocol library, as well as the
+client utilities and any new projects that require low-level protocol
+communication (like proxies). Other language interfaces (PHP extensions, SWIG,
+...) should be built off of this interface.
+
+%package devel
+Group: Development/Libraries
+Summary: Drizzle Client & Protocol Library - Header files
+Requires: %{name} = %{version}-%{release} 
+
+%description devel
+Development files for the Drizzle Client & Protocol Library
+
+%prep
+%setup -q
+
+%configure
+
+%build
+%{__make} %{_smp_mflags}
+
+%install
+%{__rm} -rf %{buildroot}
+%{__make} install DESTDIR="%{buildroot}" AM_INSTALL_PROGRAM_FLAGS=""
+
+%clean
+%{__rm} -rf %{buildroot}
+
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
+
+%files 
+%defattr(-,root,root)
+%doc AUTHORS ChangeLog COPYING INSTALL NEWS PROTOCOL README
+%attr(0755,root,root) %{_libdir}/libdrizzle.so.*
+
+%files devel
+%defattr(-,root,root)
+%{_includedir}/libdrizzle
+%{_libdir}/libdrizzle.la
+%{_libdir}/pkgconfig/libdrizzle.pc
+%{_libdir}/libdrizzle.so
+
+%changelog
+* Sun Feb 28 2010 BJ Dierkes <wdierkes@rackspace.com> - 0.7-1
+- Removed subpackage "name 0" (base package provides this functionality)
+- Moved NEWS/ChangeLog/Etc under main package (not under -devel)
+- devel package Requires full version-release
+
+* Mon Nov 30 2009 Lenz Grimmer <lenz@grimmer.com>
+- Added Build requirement for gcc-c++
+- Made the -devel package dependent on the shared lib
+
+* Fri Apr 24 2009 Lenz Grimmer <lenz@grimmer.com>
+- Added -devel subpackage, updated file list
+- Fixed rpmlint errors and warnings
+
+* Tue Jan 13 2009 Eric Day <eday@oddments.org> - 0.1-1
+- Initial package

@@ -1,0 +1,47 @@
+0.8 - 2010-03-17
+ * Added prototest suite for testing the MySQL protocol.
+ * Changed default protocol to be MySQL for Drizzle connections. This
+   is to stay in sync with defaults on the Drizzle server.
+ * Build system and RPM packaging updates.
+ * Bug fixes in concurrent query execution and compiling for FreeBSD.
+
+0.7 - 2010-01-12
+ * Added test coverage reports using lcov.
+ * Added new test cases for basic client/server functionality.
+ * Updated autoconf build system.
+
+0.6 - 2009-12-07
+ * Various cleanup and fixes around custom socket event handling and listening
+   code.
+ * Updated autoconf build system.
+ * Updated RPM packaging.
+
+0.5 - 2009-11-10
+ * Added new logging functions.
+ * Added more test cases.
+ * Cleaned up API, added more documentation.
+ * Updated autoconf build system.
+
+0.4 - 2009-06-30
+ * Removed virtual column type.
+ * Minor bug fixes.
+ * Updated autoconf build system.
+
+0.3 - 2009-05-28
+ * Improved connection interface and better handling or result error codes.
+ * Start of a windows port.
+ * Struct realignment.
+ * Cleaned up connection handling and error messages.
+ * Improved packaging support.
+ * Added external I/O event hooks.
+ * Various small bug fixes and cleanup.
+
+0.2.0 - 2009-03-27
+ * Added test framework and a few simple tests, more to come.
+ * Changes required for Drizzle client utility integration.
+ * Fixed a few connection handling and retry bugs.
+ * Simplified the escape/hex string processing.
+ * Various autotools and build system fixes.
+
+0.1 - 2009-02-10
+ * First release.

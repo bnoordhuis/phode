@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+#
+# Drizzle Client & Protocol Library
+# 
+# Copyright (C) 2008-2010 Eric Day (eday@oddments.org)
+# All rights reserved.
+# 
+# Use and distribution licensed under the BSD license.  See
+# the COPYING file in this directory for full text.
+#
+'''
+Send an infinite amount of data to a MySQL server.
+'''
+
+import optparse
+import sys
+import socket
+
+parser = optparse.OptionParser(add_help_option=False)
+
+parser.add_option("--help", action="help", help="Print out help details")
+parser.add_option("-h", "--host", dest="host", default="localhost",
+                  help="Host or IP to test", metavar="HOST")
+parser.add_option("-p", "--port", dest="port", default=3306,
+                  help="Port to test", metavar="PORT")
+
+(options, args) = parser.parse_args()
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((options.host, int(options.port)))
+print 'Connected to %s:%s' % (options.host, options.port)
+
+server_header = s.recv(1024)
+print 'Server Header:'
+print list(server_header)
+
+print
+print 'Each . represents 16MB of data:'
+
+# Max packet size plus sequence number '1'.
+packet = '\xFF\xFF\xFF\x01'
+data = 'x' * 8192
+
+# Keep sending max size packets, causes infinite loop in my_net_skip_rest.
+while True:
+  s.send(packet)
+
+  # Send 16777215 bytes.
+  for x in range(0, 2047):
+    s.send(data)
+  s.send(data[1:])
+
+  sys.stdout.write('.')
+  sys.stdout.flush()

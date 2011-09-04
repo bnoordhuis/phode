@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libdrizzle
+Description: Drizzle Client & Protocol Library
+Version: @VERSION@
+Libs: -L${libdir} -ldrizzle
+Cflags: -I${includedir}
