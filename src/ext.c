@@ -20,6 +20,12 @@
 
 #include "uv.h"
 
+#ifdef __GNUC__
+# define MAYBE_UNUSED __attribute__ ((unused))
+#else
+# define MAYBE_UNUSED /* TODO */
+#endif
+
 
 typedef struct {
   uv_tcp_t handle;
@@ -29,36 +35,40 @@ typedef struct {
 
 /* Shamelessly nicked from mongo-php-driver */
 #if ZEND_MODULE_API_NO >= 20100525
-#define init_properties(intern, class_type) \
-  object_properties_init(&intern->obj, class_type)
+#define init_properties(obj, class_type) \
+  object_properties_init((obj), class_type)
 #else
 #define init_properties(intern, class_type)                   \
   do {                                                        \
     zval *tmp;                                                \
-    zend_object_std_init(&intern->obj, class_type TSRMLS_CC); \
-    zend_hash_copy(intern->obj.properties,                    \
+    zend_hash_copy((obj)->properties,                         \
                    &class_type->default_properties,           \
                    (copy_ctor_func_t) zval_add_ref,           \
                    (void *) &tmp,                             \
-                   sizeof(zval *));                           \
+                   sizeof(zval*));                            \
   }                                                           \
   while (0)
 #endif
 
+static void tcp_wrap_free(void *object TSRMLS_DC) {
+  tcp_wrap *wrap = (tcp_wrap*) object;
+  zend_object_std_dtor(&wrap->obj TSRMLS_CC);
+
+}
 
 static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value instance;
-  tcp_wrap *intern;
+  tcp_wrap *wrap;
 
-  intern = emalloc(sizeof *intern);
-  uv_tcp_init(uv_default_loop(), &intern->handle);
+  wrap = emalloc(sizeof *wrap);
+  uv_tcp_init(uv_default_loop(), &wrap->handle);
 
+  zend_object_std_init(&wrap->obj, class_type TSRMLS_CC);
+  init_properties(&wrap->obj, class_type);
 
-  init_properties(intern, class_type);
-
-  instance.handle = zend_objects_store_put(intern,
+  instance.handle = zend_objects_store_put((void*) wrap,
                                            (zend_objects_store_dtor_t) zend_objects_destroy_object,
-                                           (zend_objects_free_object_storage_t) zend_object_std_dtor,
+                                           tcp_wrap_free,
                                            NULL TSRMLS_CC);
   instance.handlers = zend_get_std_object_handlers();
 
