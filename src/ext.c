@@ -27,6 +27,15 @@ typedef struct {
 } tcp_wrap;
 
 
+/* Shamelessly nicked from mongo-php-driver */
+#if ZEND_MODULE_API_NO >= 20100525
+#define init_properties(intern) object_properties_init(&intern->obj, class_type)
+#else
+#define init_properties(intern) zend_hash_copy(intern->obj.properties, \
+    &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,  \
+    (void *) &tmp, sizeof(zval *))
+#endif
+
 static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value instance;
   tcp_wrap *intern;
@@ -35,12 +44,8 @@ static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   intern = emalloc(sizeof *intern);
   uv_tcp_init(uv_default_loop(), &intern->handle);
 
-  zend_object_std_init(&intern->obj, class_type TSRMLS_CC);
-  zend_hash_copy(intern->obj.properties,
-                 &class_type->default_properties,
-                 (copy_ctor_func_t) zval_add_ref,
-                 &tmp,
-                 sizeof tmp);
+
+  init_properties(intern);
 
   instance.handle = zend_objects_store_put(intern,
                                            (zend_objects_store_dtor_t) zend_objects_destroy_object,
