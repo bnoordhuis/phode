@@ -38,7 +38,7 @@ typedef struct {
 #define init_properties(obj, class_type) \
   object_properties_init((obj), class_type)
 #else
-#define init_properties(intern, class_type)                   \
+#define init_properties(obj, class_type)                      \
   do {                                                        \
     zval *tmp;                                                \
     zend_hash_copy((obj)->properties,                         \
@@ -49,6 +49,7 @@ typedef struct {
   }                                                           \
   while (0)
 #endif
+
 
 static void tcp_wrap_free(void *object TSRMLS_DC) {
   tcp_wrap *wrap = (tcp_wrap*) object;
