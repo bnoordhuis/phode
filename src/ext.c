@@ -53,6 +53,12 @@ typedef struct {
   TSRMLS_D;
 } connect_wrap_t;
 
+typedef struct {
+  uv_write_t req;
+  zval* callback;
+  zval* string;
+  TSRMLS_D;
+} write_wrap_t;
 
 /* Shamelessly nicked from mongo-php-driver */
 #if ZEND_MODULE_API_NO >= 20100525
@@ -116,7 +122,7 @@ static void call_callback(zval* callback TSRMLS_DC) {
 }
 
 static void tcp_connect_cb(uv_connect_t* req, int status) {
-  connect_wrap_t* wrap = (connect_wrap_t*) req;
+  connect_wrap_t* wrap = (connect_wrap_t*) req->data;
   TSRMLS_D_GET(wrap);
 
   printf("status: %d\n", status);
@@ -125,7 +131,7 @@ static void tcp_connect_cb(uv_connect_t* req, int status) {
   Z_DELREF_P(wrap->callback);
 }
 
-PHP_FUNCTION(tcp_connect) {
+PHP_METHOD(TCP, connect) {
   char* ip;
   int ip_length;
   int port;
@@ -145,7 +151,6 @@ PHP_FUNCTION(tcp_connect) {
   r = uv_tcp_connect(&connect_wrap->req, &tcp_wrap->handle, uv_ip4_addr(ip, port), tcp_connect_cb);
   printf("== %d\n", r);
 
-
   connect_wrap->req.data = (void*) connect_wrap;
   connect_wrap->callback = callback;
   Z_ADDREF_P(callback);
@@ -155,8 +160,54 @@ PHP_FUNCTION(tcp_connect) {
 }
 
 
+static void tcp_write_cb(uv_write_t* req, int status) {
+  write_wrap_t* wrap = (write_wrap_t*) req->data;
+  TSRMLS_D_GET(wrap);
+
+  printf("write status: %d\n", status);
+
+  call_callback(wrap->callback TSRMLS_CC);
+  Z_DELREF_P(wrap->callback);
+  Z_DELREF_P(wrap->string);
+}
+
+PHP_METHOD(TCP, write) {
+  zval* string;
+  zval* callback;
+  write_wrap_t* write_wrap;
+  tcp_wrap_t* tcp_wrap;
+  uv_buf_t buf;
+  int r;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &string, &callback) == FAILURE) {
+    return;
+  }
+
+  tcp_wrap = (tcp_wrap_t*) zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  write_wrap = (write_wrap_t*) emalloc(sizeof *write_wrap);
+
+  /* Todo: leverage php's COW feaure */
+  buf.base = Z_STRVAL_P(string);
+  buf.len = Z_STRLEN_P(string);
+
+  r = uv_write(&write_wrap->req, (uv_stream_t*) &tcp_wrap->handle, &buf, 1, tcp_write_cb);
+  printf("== %d\n", r);
+
+  write_wrap->req.data = (void*) write_wrap;
+  write_wrap->callback = callback;
+  Z_ADDREF_P(callback);
+  write_wrap->string = string;
+  Z_ADDREF_P(string);
+  TSRMLS_SET(write_wrap);
+
+  RETURN_NULL();
+}
+
+
 static zend_function_entry tcp_methods[] = {
-  PHP_FALIAS(connect, tcp_connect, NULL)
+  PHP_ME(TCP, connect, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(TCP, write, NULL, ZEND_ACC_PUBLIC)
   { NULL }
 };
 
