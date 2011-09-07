@@ -1,0 +1,5 @@
+Makefile
+*.Makefile
+*.mk
+*.pyc
+/out/
