@@ -4,16 +4,13 @@
     './local.gypi',
   ],
 
-  'variables': {
-    'target_arch': 'ia32',
-  },
-
   'targets': [
     {
       'target_name': 'phode',
       'type': 'shared_library',
 
       'defines': [
+        # TODO: move to local.gypi
         'ZTS=1',
         'ZEND_DEBUG=1',
         'PHP_DEBUG=1',
@@ -48,6 +45,7 @@
               'PHP_WIN32=1',
             ],
             'libraries': [ 
+              # TODO: move to local.gypi
               '-l../php/Debug_TS/php5ts_debug.lib' 
             ]
         }],
