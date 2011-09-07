@@ -43,6 +43,7 @@
 #else /* ZTS not defined */
 # define TSRMLS_SET(o)    /* empty */
 # define TSRMLS_GET(o)    /* empty */
+# define TSRMLS_D_GET(o)  /* empty */
 
 #endif /* ZTS not defined */
 
