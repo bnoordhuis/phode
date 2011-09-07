@@ -1,4 +1,8 @@
 {
+  'variables': {
+    'visibility%': 'hidden',
+  },
+
   'target_defaults': {
     'default_configuration': 'Debug',
 
