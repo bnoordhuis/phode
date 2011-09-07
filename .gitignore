@@ -3,3 +3,4 @@ Makefile
 *.mk
 *.pyc
 /out/
+/local.gypi

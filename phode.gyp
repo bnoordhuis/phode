@@ -1,4 +1,9 @@
 {
+  'includes': [
+    './common.gypi',
+    './local.gypi',
+  ],
+
   'variables': {
     'target_arch': 'ia32',
   },
@@ -45,6 +50,12 @@
             'libraries': [ 
               '-l../php/Debug_TS/php5ts_debug.lib' 
             ]
+        }],
+        [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
+          'cflags': [
+            '-std=c99',
+            '-fPIC',
+          ],
         }],
       ],
     }

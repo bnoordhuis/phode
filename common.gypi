@@ -109,7 +109,7 @@
         ],
       }],
       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
-        'cflags': [ '-Wall', '-pthread', ],
+        'cflags': [ '-Wall', '-pthread', '-fPIC', '-std=c99' ],
         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
         'ldflags': [ '-pthread', ],
         'conditions': [
