@@ -27,10 +27,31 @@
 #endif
 
 
+/* Oh man! we're fucked. We have to do the same bullshit as php does! */
+#ifdef ZTS
+# define TSRMLS_SET(o)    (o)->TSRMLS_C = TSRMLS_C
+# define TSRMLS_GET(o)    TSRMLS_C = (o)->TSRMLS_C
+# define TSRMLS_D_GET(o)  TSRMLS_D = (o)->TSRMLS_C
+
+#else /* ZTS not defined */
+# define TSRMLS_SET(o)    /* empty */
+# define TSRMLS_GET(o)    /* empty */
+
+#endif /* ZTS not defined */
+
 typedef struct {
-  uv_tcp_t handle;
+  /* obj must be the first member, because it must be safe to cast */
+  /* tcp_wrap* to zend_object */
   zend_object obj;
-} tcp_wrap;
+  uv_tcp_t handle;
+  TSRMLS_D;
+} tcp_wrap_t;
+
+typedef struct {
+  uv_connect_t req;
+  zval* callback;
+  TSRMLS_D;
+} connect_wrap_t;
 
 
 /* Shamelessly nicked from mongo-php-driver */
@@ -52,32 +73,84 @@ typedef struct {
 
 
 static void tcp_wrap_free(void *object TSRMLS_DC) {
-  tcp_wrap *wrap = (tcp_wrap*) object;
+  tcp_wrap_t *wrap = (tcp_wrap_t*) object;
   zend_object_std_dtor(&wrap->obj TSRMLS_CC);
 
 }
 
 static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value instance;
-  tcp_wrap *wrap;
+  tcp_wrap_t *wrap;
 
   wrap = emalloc(sizeof *wrap);
+
   uv_tcp_init(uv_default_loop(), &wrap->handle);
+  wrap->handle.data = (void*) wrap;
 
   zend_object_std_init(&wrap->obj, class_type TSRMLS_CC);
   init_properties(&wrap->obj, class_type);
 
+  TSRMLS_SET(wrap);
+
   instance.handle = zend_objects_store_put((void*) wrap,
                                            (zend_objects_store_dtor_t) zend_objects_destroy_object,
                                            tcp_wrap_free,
-                                           NULL TSRMLS_CC);
+                                           NULL
+                                           TSRMLS_CC);
   instance.handlers = zend_get_std_object_handlers();
 
   return instance;
 }
 
+static void call_callback(zval* callback TSRMLS_DC) {
+   zend_fcall_info fci = empty_fcall_info;
+   zend_fcall_info_cache fci_cache = empty_fcall_info_cache;
+   char *is_callable_error = NULL;
+   zval* result;
+
+   if (zend_fcall_info_init(callback, 0, &fci, &fci_cache, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
+     fci.retval_ptr_ptr = &result;
+     fci.param_count = 0;
+     zend_call_function(&fci, &fci_cache TSRMLS_CC);
+   }
+}
+
+static void tcp_connect_cb(uv_connect_t* req, int status) {
+  connect_wrap_t* wrap = (connect_wrap_t*) req;
+  TSRMLS_D_GET(wrap);
+
+  printf("status: %d\n", status);
+
+  call_callback(wrap->callback TSRMLS_CC);
+  Z_DELREF_P(wrap->callback);
+}
 
 PHP_FUNCTION(tcp_connect) {
+  char* ip;
+  int ip_length;
+  int port;
+  zval* callback;
+  connect_wrap_t* connect_wrap;
+  tcp_wrap_t* tcp_wrap;
+  int r;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slz", &ip, &ip_length, &port, &callback) == FAILURE) {
+    return;
+  }
+
+  tcp_wrap = (tcp_wrap_t*) zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  connect_wrap = (connect_wrap_t*) emalloc(sizeof *connect_wrap);
+
+  r = uv_tcp_connect(&connect_wrap->req, &tcp_wrap->handle, uv_ip4_addr(ip, port), tcp_connect_cb);
+  printf("== %d\n", r);
+
+
+  connect_wrap->req.data = (void*) connect_wrap;
+  connect_wrap->callback = callback;
+  Z_ADDREF_P(callback);
+  TSRMLS_SET(connect_wrap);
+
   RETURN_NULL();
 }
 
