@@ -215,7 +215,7 @@ static zend_function_entry tcp_methods[] = {
 };
 
 
-PHP_MINIT_FUNCTION(node) {
+PHP_MINIT_FUNCTION(phode) {
   zend_class_entry ce;
 
   uv_init();
@@ -228,14 +228,14 @@ PHP_MINIT_FUNCTION(node) {
 }
 
 
-PHP_MSHUTDOWN_FUNCTION(node) {
+PHP_MSHUTDOWN_FUNCTION(phode) {
   return SUCCESS;
 }
 
 
-PHP_MINFO_FUNCTION(node) {
+PHP_MINFO_FUNCTION(phode) {
   php_info_print_table_start();
-  php_info_print_table_header(2, "node", "enabled");
+  php_info_print_table_header(2, "phode", "enabled");
   php_info_print_table_end();
 }
 
@@ -252,17 +252,17 @@ static zend_function_entry functions[] = {
 };
 
 
-zend_module_entry node_module_entry = {
+zend_module_entry phode_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
   STANDARD_MODULE_HEADER,
 #endif
-  "node",
+  "phode",
   functions,
-  PHP_MINIT(node),
-  PHP_MSHUTDOWN(node),
+  PHP_MINIT(phode),
+  PHP_MSHUTDOWN(phode),
   NULL,
   NULL,
-  PHP_MINFO(node),
+  PHP_MINFO(phode),
 #if ZEND_MODULE_API_NO >= 20010901
   "0.0.1",
 #endif
@@ -270,4 +270,4 @@ zend_module_entry node_module_entry = {
 };
 
 
-ZEND_GET_MODULE(node)
+ZEND_GET_MODULE(phode)
