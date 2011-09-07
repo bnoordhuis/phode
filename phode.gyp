@@ -27,10 +27,10 @@
       'include_dirs': [
         'src',
         'deps/uv/src/ares',
-        '../php',
-        '../php/main',
-        '../php/tsrm',
-        '../php/zend',
+        '<(PHP_INCLUDE_PATH)',
+        '<(PHP_INCLUDE_PATH)/main',
+        '<(PHP_INCLUDE_PATH)/TSRM',
+        '<(PHP_INCLUDE_PATH)/Zend',
       ],
 
       'sources': [
