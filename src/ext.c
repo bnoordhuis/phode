@@ -20,6 +20,12 @@
 
 #include "uv.h"
 
+#include <stddef.h> /* offsetof */
+
+#define container_of(ptr, type, member) \
+  ((type *) ((char *) (ptr) - offsetof(type, member)))
+
+
 #ifdef __GNUC__
 # define MAYBE_UNUSED __attribute__ ((unused))
 #else
@@ -91,7 +97,6 @@ static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   wrap = emalloc(sizeof *wrap);
 
   uv_tcp_init(uv_default_loop(), &wrap->handle);
-  wrap->handle.data = (void*) wrap;
 
   zend_object_std_init(&wrap->obj, class_type TSRMLS_CC);
   init_properties(&wrap->obj, class_type);
@@ -122,7 +127,7 @@ static void call_callback(zval* callback TSRMLS_DC) {
 }
 
 static void tcp_connect_cb(uv_connect_t* req, int status) {
-  connect_wrap_t* wrap = (connect_wrap_t*) req->data;
+  connect_wrap_t* wrap = container_of(req, connect_wrap_t, req);
   TSRMLS_D_GET(wrap);
 
   printf("status: %d\n", status);
@@ -151,7 +156,6 @@ PHP_METHOD(TCP, connect) {
   r = uv_tcp_connect(&connect_wrap->req, &tcp_wrap->handle, uv_ip4_addr(ip, port), tcp_connect_cb);
   printf("== %d\n", r);
 
-  connect_wrap->req.data = (void*) connect_wrap;
   connect_wrap->callback = callback;
   Z_ADDREF_P(callback);
   TSRMLS_SET(connect_wrap);
@@ -161,7 +165,7 @@ PHP_METHOD(TCP, connect) {
 
 
 static void tcp_write_cb(uv_write_t* req, int status) {
-  write_wrap_t* wrap = (write_wrap_t*) req->data;
+  write_wrap_t* wrap = container_of(req, write_wrap_t, req);
   TSRMLS_D_GET(wrap);
 
   printf("write status: %d\n", status);
@@ -194,7 +198,6 @@ PHP_METHOD(TCP, write) {
   r = uv_write(&write_wrap->req, (uv_stream_t*) &tcp_wrap->handle, &buf, 1, tcp_write_cb);
   printf("== %d\n", r);
 
-  write_wrap->req.data = (void*) write_wrap;
   write_wrap->callback = callback;
   Z_ADDREF_P(callback);
   write_wrap->string = string;
