@@ -1,6 +1,22 @@
+# local user files
+/local.gypi
+
+# unix gyp and build products
 Makefile
 *.Makefile
 *.mk
 *.pyc
 /out/
-/local.gypi
+
+# windows gyp and build products
+*.opensdf
+*.sln
+*.sdf
+*.suo
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+/Debug/
+/Release/
+/ipch/
+obj/
