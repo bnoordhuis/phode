@@ -1,0 +1,1 @@
+tools\gyp\gyp phode.gyp -I common.gypi -Dlibrary=static_library --depth=.
