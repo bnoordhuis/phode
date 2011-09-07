@@ -1,0 +1,17 @@
+{
+  'variables': {
+    'PHP_INCLUDE_PATH': '../../opt/php5/include/php',
+    'host_arch': 'x64',
+    'target_arch': 'x64',
+  },
+  'target_defaults': {
+    'include_dirs': [
+    ],
+    'defines': [
+    ],
+    'cflags': [
+    ],
+    'libraries': [
+    ],
+  },
+}
