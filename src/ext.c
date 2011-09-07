@@ -45,13 +45,16 @@
 
 #endif /* ZTS not defined */
 
+
 typedef struct {
   /* obj must be the first member, because it must be safe to cast */
   /* tcp_wrap* to zend_object */
   zend_object obj;
   uv_tcp_t handle;
+  zval* close_cb;
   TSRMLS_D;
 } tcp_wrap_t;
+
 
 typedef struct {
   uv_connect_t req;
@@ -59,12 +62,14 @@ typedef struct {
   TSRMLS_D;
 } connect_wrap_t;
 
+
 typedef struct {
   uv_write_t req;
   zval* callback;
   zval* string;
   TSRMLS_D;
 } write_wrap_t;
+
 
 /* Shamelessly nicked from mongo-php-driver */
 #if ZEND_MODULE_API_NO >= 20100525
@@ -85,10 +90,11 @@ typedef struct {
 
 
 static void tcp_wrap_free(void *object TSRMLS_DC) {
-  tcp_wrap_t *wrap = (tcp_wrap_t*) object;
+  tcp_wrap_t *wrap = object;
   zend_object_std_dtor(&wrap->obj TSRMLS_CC);
-
+  efree(wrap);
 }
+
 
 static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value instance;
@@ -175,6 +181,7 @@ static void tcp_write_cb(uv_write_t* req, int status) {
   Z_DELREF_P(wrap->string);
 }
 
+
 PHP_METHOD(TCP, write) {
   zval* string;
   zval* callback;
@@ -208,9 +215,36 @@ PHP_METHOD(TCP, write) {
 }
 
 
+static void tcp_close_cb(uv_handle_t* handle) {
+  tcp_wrap_t* self = container_of(handle, tcp_wrap_t, handle);
+  TSRMLS_D_GET(self);
+  call_callback(self->close_cb TSRMLS_CC);
+  Z_DELREF_P(self->close_cb);
+}
+
+
+PHP_METHOD(TCP, close) {
+  tcp_wrap_t* self;
+  zval* callback;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &callback) == FAILURE) {
+    return;
+  }
+
+  self = (tcp_wrap_t*) zend_object_store_get_object(getThis() TSRMLS_CC);
+  self->close_cb = callback;
+  Z_ADDREF_P(callback);
+
+  uv_close((uv_handle_t*)&self->handle, tcp_close_cb);
+
+  RETURN_NULL();
+}
+
+
 static zend_function_entry tcp_methods[] = {
   PHP_ME(TCP, connect, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(TCP, write, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(TCP, close, NULL, ZEND_ACC_PUBLIC)
   { NULL }
 };
 
