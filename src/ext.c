@@ -311,9 +311,10 @@ void tcp_connection_cb(uv_stream_t* server_handle, int status) {
 
   /* Call the connection callback */
   if (self->connection_cb) {
-    zval** argv0;
-    argv0 = &client_zval;
-    call_callback(self->connection_cb, 1, &argv0 TSRMLS_CC);
+    zval* args[1], **argp;
+    args[0] = client_zval;
+    argp = (zval**) &args;
+    call_callback(self->connection_cb, 1, &argp TSRMLS_CC);
   }
 };
 
