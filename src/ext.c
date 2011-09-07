@@ -17,6 +17,7 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
+#include "Zend/zend_exceptions.h"
 
 #include "uv.h"
 
@@ -52,6 +53,7 @@ typedef struct {
   zend_object obj;
   uv_tcp_t handle;
   zval* close_cb;
+  unsigned dead:1;
   TSRMLS_D;
 } tcp_wrap_t;
 
@@ -89,6 +91,15 @@ typedef struct {
 #endif
 
 
+#define HEALTHCHECK(handle)                                       \
+  if ((handle)->dead) {                                           \
+    zend_throw_exception(zend_exception_get_default(TSRMLS_C),    \
+                         "cannot call methods on a dead handle",  \
+                         0 TSRMLS_CC);                            \
+    RETURN_NULL();                                                \
+  }
+
+
 static void tcp_wrap_free(void *object TSRMLS_DC) {
   tcp_wrap_t *wrap = object;
   zend_object_std_dtor(&wrap->obj TSRMLS_CC);
@@ -119,6 +130,7 @@ static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
   return instance;
 }
 
+
 static void call_callback(zval* callback TSRMLS_DC) {
    zend_fcall_info fci = empty_fcall_info;
    zend_fcall_info_cache fci_cache = empty_fcall_info_cache;
@@ -132,6 +144,7 @@ static void call_callback(zval* callback TSRMLS_DC) {
    }
 }
 
+
 static void tcp_connect_cb(uv_connect_t* req, int status) {
   connect_wrap_t* wrap = container_of(req, connect_wrap_t, req);
   TSRMLS_D_GET(wrap);
@@ -141,6 +154,7 @@ static void tcp_connect_cb(uv_connect_t* req, int status) {
   call_callback(wrap->callback TSRMLS_CC);
   Z_DELREF_P(wrap->callback);
 }
+
 
 PHP_METHOD(TCP, connect) {
   char* ip;
@@ -156,6 +170,7 @@ PHP_METHOD(TCP, connect) {
   }
 
   tcp_wrap = (tcp_wrap_t*) zend_object_store_get_object(getThis() TSRMLS_CC);
+  HEALTHCHECK(tcp_wrap);
 
   connect_wrap = (connect_wrap_t*) emalloc(sizeof *connect_wrap);
 
@@ -195,6 +210,7 @@ PHP_METHOD(TCP, write) {
   }
 
   tcp_wrap = (tcp_wrap_t*) zend_object_store_get_object(getThis() TSRMLS_CC);
+  HEALTHCHECK(tcp_wrap);
 
   write_wrap = (write_wrap_t*) emalloc(sizeof *write_wrap);
 
@@ -232,10 +248,13 @@ PHP_METHOD(TCP, close) {
   }
 
   self = (tcp_wrap_t*) zend_object_store_get_object(getThis() TSRMLS_CC);
+  HEALTHCHECK(self);
+
   self->close_cb = callback;
   Z_ADDREF_P(callback);
 
   uv_close((uv_handle_t*)&self->handle, tcp_close_cb);
+  self->dead = 1;
 
   RETURN_NULL();
 }
