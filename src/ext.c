@@ -147,7 +147,7 @@ static zend_object_value tcp_new(zend_class_entry *class_type TSRMLS_DC) {
 }
 
 
-static void call_callback(zval* callback, int argc, zval*** argv TSRMLS_DC) {
+static void call_callback(zval* callback, int argc, zval* argv[] TSRMLS_DC) {
    zend_fcall_info fci = empty_fcall_info;
    zend_fcall_info_cache fci_cache = empty_fcall_info_cache;
    char *is_callable_error = NULL;
@@ -156,7 +156,7 @@ static void call_callback(zval* callback, int argc, zval*** argv TSRMLS_DC) {
    if (zend_fcall_info_init(callback, 0, &fci, &fci_cache, NULL, &is_callable_error TSRMLS_CC) == SUCCESS) {
      fci.retval_ptr_ptr = &result;
      fci.param_count = argc;
-     fci.params = argv;
+     fci.params = &argv;
      zend_call_function(&fci, &fci_cache TSRMLS_CC);
    }
 }
@@ -311,10 +311,9 @@ void tcp_connection_cb(uv_stream_t* server_handle, int status) {
 
   /* Call the connection callback */
   if (self->connection_cb) {
-    zval* args[1], **argp;
+    zval* args[1];
     args[0] = client_zval;
-    argp = (zval**) &args;
-    call_callback(self->connection_cb, 1, &argp TSRMLS_CC);
+    call_callback(self->connection_cb, 1, args TSRMLS_CC);
   }
 };
 
