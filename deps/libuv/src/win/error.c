@@ -96,6 +96,8 @@ char* uv_strerror(uv_err_t err) {
 uv_err_code uv_translate_sys_error(int sys_errno) {
   switch (sys_errno) {
     case ERROR_SUCCESS:                     return UV_OK;
+    case ERROR_FILE_NOT_FOUND:              return UV_ENOENT;
+    case ERROR_PATH_NOT_FOUND:              return UV_ENOENT;
     case ERROR_NOACCESS:                    return UV_EACCESS;
     case WSAEACCES:                         return UV_EACCESS;
     case ERROR_ADDRESS_ALREADY_ASSOCIATED:  return UV_EADDRINUSE;
@@ -104,6 +106,8 @@ uv_err_code uv_translate_sys_error(int sys_errno) {
     case WSAEAFNOSUPPORT:                   return UV_EAFNOSUPPORT;
     case WSAEWOULDBLOCK:                    return UV_EAGAIN;
     case WSAEALREADY:                       return UV_EALREADY;
+    case ERROR_CONNECTION_ABORTED:          return UV_ECONNABORTED;
+    case WSAECONNABORTED:                   return UV_ECONNABORTED;
     case ERROR_CONNECTION_REFUSED:          return UV_ECONNREFUSED;
     case WSAECONNREFUSED:                   return UV_ECONNREFUSED;
     case WSAEFAULT:                         return UV_EFAULT;
@@ -127,6 +131,7 @@ uv_err_code uv_translate_sys_error(int sys_errno) {
     case ERROR_BROKEN_PIPE:                 return UV_EOF;
     case ERROR_PIPE_BUSY:                   return UV_EBUSY;
     case ERROR_SEM_TIMEOUT:                 return UV_ETIMEDOUT;
+    case ERROR_ALREADY_EXISTS:              return UV_EEXIST;
     default:                                return UV_UNKNOWN;
   }
 }

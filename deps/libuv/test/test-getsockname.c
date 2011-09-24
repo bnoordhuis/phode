@@ -117,7 +117,8 @@ static void on_connection(uv_stream_t* server, int status) {
   handle = (uv_handle_t*) malloc(sizeof(uv_tcp_t));
   ASSERT(handle != NULL);
 
-  uv_tcp_init(loop, (uv_tcp_t*)handle);
+  r = uv_tcp_init(loop, (uv_tcp_t*)handle);
+  ASSERT(r == 0);
 
   /* associate server with stream */
   handle->data = server;
@@ -309,7 +310,6 @@ static void udp_sender(void) {
 
 
 TEST_IMPL(getsockname_tcp) {
-  uv_init();
   loop = uv_default_loop();
 
   if (tcp_listener())
@@ -327,7 +327,6 @@ TEST_IMPL(getsockname_tcp) {
 
 
 TEST_IMPL(getsockname_udp) {
-  uv_init();
   loop = uv_default_loop();
 
   if (udp_listener())

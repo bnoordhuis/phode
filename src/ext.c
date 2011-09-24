@@ -401,8 +401,6 @@ static zend_function_entry tcp_methods[] = {
 PHP_MINIT_FUNCTION(phode) {
   zend_class_entry ce;
 
-  uv_init();
-
   INIT_CLASS_ENTRY(ce, "TCP", tcp_methods);
   ce.create_object = tcp_new;
   tcp_ce = zend_register_internal_class(&ce TSRMLS_CC);

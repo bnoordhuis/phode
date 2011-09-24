@@ -29,7 +29,7 @@
 /*
  * MinGW is missing this
  */
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__MINGW64_VERSION_MAJOR)
   typedef struct addrinfoW {
     int ai_flags;
     int ai_family;
@@ -216,12 +216,17 @@ complete:
   /* finally do callback with converted result */
   handle->getaddrinfo_cb(handle, uv_ret, (struct addrinfo*)alloc_ptr);
 
+  uv_unref(loop);
+}
+
+
+void uv_freeaddrinfo(struct addrinfo* ai) {
+  char* alloc_ptr = (char*)ai;
+
   /* release copied result memory */
   if (alloc_ptr != NULL) {
     free(alloc_ptr);
   }
-
-  uv_unref(loop);
 }
 
 
@@ -254,6 +259,8 @@ int uv_getaddrinfo(uv_loop_t* loop,
     uv_set_sys_error(loop, WSAEINVAL);
     goto error;
   }
+
+  uv_req_init(loop, (uv_req_t*)handle);
 
   handle->getaddrinfo_cb = getaddrinfo_cb;
   handle->res = NULL;

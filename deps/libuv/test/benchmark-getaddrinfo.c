@@ -52,6 +52,8 @@ static void getaddrinfo_cb(uv_getaddrinfo_t* handle, int status,
   if (calls_initiated < TOTAL_CALLS) {
     getaddrinfo_initiate(handle);
   }
+
+  uv_freeaddrinfo(res);
 }
 
 
@@ -68,7 +70,6 @@ static void getaddrinfo_initiate(uv_getaddrinfo_t* handle) {
 BENCHMARK_IMPL(getaddrinfo) {
   int i;
 
-  uv_init(loop);
   loop = uv_default_loop();
 
   uv_update_time(loop);
